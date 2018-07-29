@@ -113,15 +113,7 @@ export default class Particles {
     videoTexture.minFilter = videoTexture.magFilter = THREE.NearestFilter
     videoTexture.needsUpdate = true
 
-    const videoDiffImage = this.videoDiffImage = document.createElement('canvas')
-    this.videoDiffImageContext = videoDiffImage.getContext('2d')
-
-    const videoDiffTexture = this.videoDiffTexture = new THREE.Texture(videoDiffImage)
-    videoDiffTexture.minFilter = videoDiffTexture.magFilter = THREE.NearestFilter
-    videoDiffTexture.needsUpdate = true
-
     document.querySelector('body').appendChild(videoImage)
-    document.querySelector('body').appendChild(videoDiffImage)
 
     this.positions = new Float32Array(this.numParticles * 3)
 
@@ -132,7 +124,7 @@ export default class Particles {
       uniforms: {
         tPosition: { type: 't', value: 0 },
         tDefaultSize: { type: 't', value: 0 },
-        tWebcam: { type: 't', value: videoDiffTexture },
+        tWebcam: { type: 't', value: videoTexture },
 
         sizeRange: { type: 'f', value: this.sizeRange },
         sizeInc: { type: 'f', value: this.sizeInc },
@@ -151,7 +143,7 @@ export default class Particles {
     const uniforms = Object.assign({}, configUniforms, {
       tPosition: { type: 't', value: this.sizeFBO.simulationShader.uniforms.tPosition.value },
       tSize: { type: 't', value: this.sizeFBO.targets[0] },
-      tWebcam: { type: 't', value: videoDiffTexture },
+      tWebcam: { type: 't', value: videoTexture },
 
       // tColour: { type: 't', value: this.getColours() }
       tColour: { type: 't', value: videoTexture }
@@ -323,47 +315,11 @@ export default class Particles {
   update () {
     if (this.ready) {
       // update video texture with webcam difference feed
-      const { video, videoImageContext, videoDiffImageContext, videoImage: { width: videoWidth, height: videoHeight }, videoTexture, videoDiffTexture } = this
+      const { video, videoImageContext, videoImage: { width: videoWidth, height: videoHeight }, videoTexture } = this
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
         videoImageContext.drawImage(video, 0, 0, videoWidth, videoHeight)
 
         videoTexture.needsUpdate = true
-
-        const imgPixels = videoImageContext.getImageData(0, 0, videoWidth, videoHeight)
-
-        for (let y = 0; y < imgPixels.height; y++) {
-          for (let x = 0; x < imgPixels.width; x++) {
-            const i = (y * 4) * imgPixels.width + x * 4
-            const avg = (imgPixels.data[i] + imgPixels.data[i + 1] + imgPixels.data[i + 2]) / 3
-
-            imgPixels.data[i] = avg
-            imgPixels.data[i + 1] = avg
-            imgPixels.data[i + 2] = avg
-          }
-        }
-
-        for (let y = 0; y < imgPixels.height; y += 1) {
-          for (let x = 0; x < imgPixels.width; x += 1) {
-            const i = (y * 4) * imgPixels.width + x * 4
-
-            const average = (imgPixels.data[i - 3] + imgPixels.data[i + 5] +
-              imgPixels.data[i - (imgPixels.width * 4) + 1] + imgPixels.data[i + (imgPixels.width * 4) + 1] +
-              imgPixels.data[i - (imgPixels.width * 4) - 3] + imgPixels.data[i + (imgPixels.width * 4) - 3] +
-              imgPixels.data[i - (imgPixels.width * 4) + 5] + imgPixels.data[i + (imgPixels.width * 4) + 5]) / 4
-
-            imgPixels.data[i] -= average
-            imgPixels.data[i + 1] -= average
-            imgPixels.data[i + 2] -= average
-
-            imgPixels.data[i] *= 1000
-            imgPixels.data[i + 1] *= 1000
-            imgPixels.data[i + 2] *= 1000
-          }
-        }
-
-        videoDiffImageContext.putImageData(imgPixels, 0, 0, 0, 0, imgPixels.width, imgPixels.height)
-
-        videoDiffTexture.needsUpdate = true
       }
 
       this.sizeFBO.simulate()

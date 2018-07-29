@@ -25,7 +25,7 @@ const vertexShader = `
 	void main() {
 		vUv = position.xy;
 
-		vec4 position = vec4((vUv.x * 1.0) - 0.5, (vUv.y * 1.0) - 0.5, 0.0, 1.0);
+		vec4 position = vec4((vUv.x - 0.5) * 0.75, (vUv.y - 0.5), 0.0, 1.0);
 		float size = texture2D(tSize, vUv).w;
 
 		vec4 mvPosition = modelViewMatrix * position;
