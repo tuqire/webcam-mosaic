@@ -6,15 +6,18 @@ import Renderer from './io/renderer'
 import Scene from './objects/scene'
 import Particles from './objects/particles'
 
+const isNotMobileScreen = () => window.matchMedia('(min-width: 480px)').matches
+const isTabletScreen = () => window.matchMedia('(max-width: 1000px)').matches
+
 document.addEventListener('DOMContentLoaded', () => {
-  if (isWebglEnabled) {
+  if (isWebglEnabled && isNotMobileScreen()) {
     const container = document.getElementById('stars-simulation-container')
     const renderer = new Renderer({ container })
     const scene = new Scene()
     const particles = new Particles({
       scene,
       renderer,
-      numParticles: window.matchMedia('(max-width: 480px)').matches ? 4000 : 1000,
+      numParticles: isTabletScreen() ? 400 : 10000,
       radius: 3,
       minSize: 0.015,
       maxSize: 0.03,
@@ -54,6 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
     animate()
   } else {
     const info = document.getElementById('info')
-    info.innerHTML = 'Your browser is not supported. Please use the latest version of Firefox or Chrome.'
+    info.innerHTML = 'This browser is not supported. Please use the latest version of Chrome on desktop.'
   }
 })
